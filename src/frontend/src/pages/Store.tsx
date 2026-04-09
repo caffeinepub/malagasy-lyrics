@@ -23,18 +23,19 @@ import {
 import { useState } from "react";
 
 function TrackCard({ track }: { track: TrackView }) {
+  const trackIdStr = track.id.toString();
   return (
     <Link
       to="/store/$id"
-      params={{ id: track.id }}
+      params={{ id: trackIdStr }}
       className="card-music-store group block"
-      data-ocid={`track-card-${track.id}`}
+      data-ocid={`track-card-${trackIdStr}`}
     >
       {/* Cover art */}
       <div className="aspect-square relative overflow-hidden bg-muted/30">
         {track.coverImage ? (
           <img
-            src={track.coverImage}
+            src={track.coverImage.getDirectURL()}
             alt={track.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
@@ -248,7 +249,7 @@ export function StorePage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
           {(tracks ?? []).map((track) => (
-            <TrackCard key={track.id} track={track} />
+            <TrackCard key={track.id.toString()} track={track} />
           ))}
         </div>
       )}

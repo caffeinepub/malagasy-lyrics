@@ -1,14 +1,19 @@
 import { createActor } from "@/backend";
-import type { LyricEntry, LyricInput, SearchParams } from "@/types/lyrics";
+import type {
+  ArtistInfo,
+  LyricEntry,
+  LyricInput,
+  SearchParams,
+} from "@/types/lyrics";
 import { useActor } from "@caffeineai/core-infrastructure";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyActor = any;
 
 // ---------------------------------------------------------------------------
 // Hooks
 // ---------------------------------------------------------------------------
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyActor = any;
 
 export function useLyrics() {
   const { actor, isFetching } = useActor(createActor);
@@ -75,7 +80,6 @@ export function useArtists() {
       if (!backend?.listArtists) return [];
       try {
         const raw = await backend.listArtists();
-        // Backend returns string[] (artist names); convert to ArtistInfo if needed
         if (
           Array.isArray(raw) &&
           raw.length > 0 &&
@@ -93,23 +97,21 @@ export function useArtists() {
   });
 }
 
+/**
+ * Submit a new lyric. The backend returns LyricId (bigint), not a LyricEntry.
+ * Use the returned id to navigate to /lyrics/$id.
+ */
 export function useSubmitLyric() {
   const { actor } = useActor(createActor);
   const backend = actor as AnyActor;
   const qc = useQueryClient();
-  return useMutation<LyricEntry, Error, LyricInput>({
-    mutationFn: async (input: LyricInput): Promise<LyricEntry> => {
+  return useMutation<bigint, Error, LyricInput>({
+    mutationFn: async (input: LyricInput): Promise<bigint> => {
       if (!backend?.submitLyric) {
-        return {
-          ...input,
-          id: BigInt(Date.now()),
-          contributor: "",
-          contributorId: "",
-          createdAt: BigInt(Date.now()),
-          updatedAt: BigInt(Date.now()),
-        } as LyricEntry;
+        throw new Error("Backend not available");
       }
-      return (await backend.submitLyric(input)) as LyricEntry;
+      const id = await backend.submitLyric(input);
+      return id as bigint;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["lyrics"] });
@@ -122,23 +124,14 @@ export function useUpdateLyric() {
   const { actor } = useActor(createActor);
   const backend = actor as AnyActor;
   const qc = useQueryClient();
-  return useMutation<LyricEntry, Error, { id: bigint; input: LyricInput }>({
-    mutationFn: async ({ id, input }): Promise<LyricEntry> => {
-      if (!backend?.updateLyric) {
-        return {
-          ...input,
-          id,
-          contributor: "",
-          contributorId: "",
-          createdAt: BigInt(Date.now()),
-          updatedAt: BigInt(Date.now()),
-        } as LyricEntry;
-      }
-      return (await backend.updateLyric(id, input)) as LyricEntry;
+  return useMutation<boolean, Error, { id: bigint; input: LyricInput }>({
+    mutationFn: async ({ id, input }): Promise<boolean> => {
+      if (!backend?.updateLyric) return false;
+      return (await backend.updateLyric(id, input)) as boolean;
     },
-    onSuccess: (data) => {
+    onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: ["lyrics"] });
-      qc.invalidateQueries({ queryKey: ["lyric", data.id.toString()] });
+      qc.invalidateQueries({ queryKey: ["lyric", id.toString()] });
     },
   });
 }
@@ -146,18 +139,11 @@ export function useUpdateLyric() {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function buildArtistMap(lyrics: LyricEntry[]): ArtistInfo[] {
+
+export function buildArtistMap(lyrics: LyricEntry[]): ArtistInfo[] {
   const map: Record<string, number> = {};
   for (const l of lyrics) {
     map[l.artist] = (map[l.artist] ?? 0) + 1;
   }
   return Object.entries(map).map(([name, songCount]) => ({ name, songCount }));
-}
-
-// Keep export for any external usage
-export { buildArtistMap };
-
-export interface ArtistInfo {
-  name: string;
-  songCount: number;
 }

@@ -385,7 +385,7 @@ function TrackForm({
   const [audioPicker, setAudioPicker] = useState<FilePickerState>(() => {
     if (initial?.audioFile) {
       return {
-        blob: ExternalBlob.fromURL(initial.audioFile),
+        blob: initial.audioFile,
         filename: "Current audio file",
         previewUrl: null,
         uploading: false,
@@ -397,10 +397,11 @@ function TrackForm({
   });
   const [coverPicker, setCoverPicker] = useState<FilePickerState>(() => {
     if (initial?.coverImage) {
+      const coverUrl = initial.coverImage.getDirectURL();
       return {
-        blob: ExternalBlob.fromURL(initial.coverImage),
+        blob: initial.coverImage,
         filename: "Current cover image",
-        previewUrl: initial.coverImage,
+        previewUrl: coverUrl,
         uploading: false,
         progress: 100,
         error: null,
@@ -561,7 +562,7 @@ function SellerTrackRow({
 
   async function handleUnpublish() {
     try {
-      await unpublish.mutateAsync(track.id);
+      await unpublish.mutateAsync(track.id.toString());
       toast.success("Track unpublished");
     } catch {
       toast.error("Failed to unpublish");
@@ -570,7 +571,7 @@ function SellerTrackRow({
 
   async function handleRepublish() {
     try {
-      await republish.mutateAsync(track.id);
+      await republish.mutateAsync(track.id.toString());
       toast.success("Track published");
     } catch {
       toast.error("Failed to publish");
@@ -584,7 +585,7 @@ function SellerTrackRow({
         background: "oklch(var(--card))",
         border: "1px solid oklch(var(--border) / 0.3)",
       }}
-      data-ocid={`seller-track-${track.id}`}
+      data-ocid={`seller-track-${track.id.toString()}`}
     >
       {/* Cover thumb */}
       <div
@@ -593,7 +594,7 @@ function SellerTrackRow({
       >
         {track.coverImage ? (
           <img
-            src={track.coverImage}
+            src={track.coverImage.getDirectURL()}
             alt={track.title}
             className="w-full h-full object-cover"
           />
@@ -646,7 +647,7 @@ function SellerTrackRow({
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
-        <Link to="/store/$id" params={{ id: track.id }}>
+        <Link to="/store/$id" params={{ id: track.id.toString() }}>
           <Button
             variant="ghost"
             size="icon"
@@ -662,7 +663,7 @@ function SellerTrackRow({
           className="h-8 w-8"
           onClick={() => onEdit(track)}
           aria-label="Edit track"
-          data-ocid={`seller-track-edit-${track.id}`}
+          data-ocid={`seller-track-edit-${track.id.toString()}`}
         >
           <Edit2 className="w-4 h-4" />
         </Button>
@@ -674,7 +675,7 @@ function SellerTrackRow({
             onClick={handleUnpublish}
             disabled={unpublish.isPending}
             aria-label="Unpublish track"
-            data-ocid={`seller-track-unpublish-${track.id}`}
+            data-ocid={`seller-track-unpublish-${track.id.toString()}`}
           >
             <EyeOff className="w-4 h-4" />
           </Button>
@@ -686,7 +687,7 @@ function SellerTrackRow({
             onClick={handleRepublish}
             disabled={republish.isPending}
             aria-label="Publish track"
-            data-ocid={`seller-track-publish-${track.id}`}
+            data-ocid={`seller-track-publish-${track.id.toString()}`}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -751,7 +752,10 @@ export function SellerDashboardPage() {
   async function handleEdit(data: TrackInput) {
     if (!editingTrack) return;
     try {
-      await editTrack.mutateAsync({ id: editingTrack.id, input: data });
+      await editTrack.mutateAsync({
+        id: editingTrack.id.toString(),
+        input: data,
+      });
       toast.success("Track updated!");
       setEditingTrack(null);
     } catch {
@@ -876,7 +880,11 @@ export function SellerDashboardPage() {
         ) : (
           <div className="space-y-3">
             {myTracks.map((t) => (
-              <SellerTrackRow key={t.id} track={t} onEdit={setEditingTrack} />
+              <SellerTrackRow
+                key={t.id.toString()}
+                track={t}
+                onEdit={setEditingTrack}
+              />
             ))}
           </div>
         )}

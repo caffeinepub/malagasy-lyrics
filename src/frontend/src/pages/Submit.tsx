@@ -13,9 +13,15 @@ import { useSubmitLyric } from "@/hooks/useLyrics";
 import type { LyricInput } from "@/types/lyrics";
 import { useInternetIdentity } from "@caffeineai/core-infrastructure";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, LogIn, Music2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Lock, LogIn, Music2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+/**
+ * The owner's Internet Identity principal.
+ * Only this principal can submit lyrics.
+ */
+const OWNER_PRINCIPAL = "rwlgt-iiaaa-aaaaa-aaaaa-cai";
 
 const GENRES = [
   "Salegy",
@@ -36,8 +42,10 @@ interface FormErrors {
 }
 
 export function SubmitPage() {
-  const { loginStatus, login } = useInternetIdentity();
+  const { loginStatus, login, identity } = useInternetIdentity();
   const isLoggedIn = loginStatus === "success";
+  const principalStr = identity?.getPrincipal().toString() ?? "";
+  const isOwner = isLoggedIn && principalStr === OWNER_PRINCIPAL;
   const navigate = useNavigate();
   const { mutateAsync, isPending } = useSubmitLyric();
 
@@ -70,23 +78,28 @@ export function SubmitPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
     const input: LyricInput = {
       title: form.title.trim(),
       artist: form.artist.trim(),
-      album: form.album.trim() || undefined,
-      year: form.year ? Number(form.year) : undefined,
-      genre: form.genre || undefined,
+      album: form.album.trim(),
+      yearReleased: form.year.trim()
+        ? BigInt(Math.round(Number(form.year)))
+        : BigInt(0),
       lyrics: form.lyrics.trim(),
+      notes: form.notes.trim(),
     };
+
     try {
-      const lyric = await mutateAsync(input);
-      toast.success("Lyrics shared successfully!");
-      navigate({ to: "/lyrics/$id", params: { id: lyric.id.toString() } });
+      const lyricId = await mutateAsync(input);
+      toast.success("Lyrics submitted successfully!");
+      navigate({ to: "/lyrics/$id", params: { id: lyricId.toString() } });
     } catch {
       toast.error("Failed to submit lyrics. Please try again.");
     }
   };
 
+  // Not logged in
   if (!isLoggedIn) {
     return (
       <div
@@ -104,11 +117,10 @@ export function SubmitPage() {
             />
           </div>
           <h1 className="font-display text-3xl font-semibold mb-3 text-foreground">
-            Sign in to Share Lyrics
+            Sign in Required
           </h1>
           <p className="text-muted-foreground mb-8 leading-relaxed">
-            Join the Malagasy Lyrics community and contribute songs to the
-            growing archive of Malagasy music.
+            Please sign in with Internet Identity to continue.
           </p>
           <Button
             size="lg"
@@ -119,6 +131,44 @@ export function SubmitPage() {
             <LogIn className="w-4 h-4" />
             Sign in with Internet Identity
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Logged in but not the owner
+  if (!isOwner) {
+    return (
+      <div
+        className="flex flex-col items-center justify-center min-h-[60vh] px-4"
+        data-ocid="submit-not-authorized"
+      >
+        <div className="text-center max-w-md animate-fade-up">
+          <div
+            className="mx-auto mb-6 w-16 h-16 rounded-full flex items-center justify-center"
+            style={{ background: "oklch(var(--destructive) / 0.1)" }}
+          >
+            <Lock
+              className="w-8 h-8"
+              style={{ color: "oklch(var(--destructive))" }}
+            />
+          </div>
+          <h1 className="font-display text-2xl font-semibold mb-3 text-foreground">
+            Not Authorized
+          </h1>
+          <p className="text-muted-foreground mb-8 leading-relaxed">
+            Only the site owner can submit lyrics. You can browse and enjoy the
+            existing collection.
+          </p>
+          <Link to="/" search={{ q: "", genre: "", year: "All" }}>
+            <Button
+              variant="outline"
+              data-ocid="submit-back-home-btn"
+              className="font-display"
+            >
+              Browse Lyrics
+            </Button>
+          </Link>
         </div>
       </div>
     );
@@ -141,8 +191,8 @@ export function SubmitPage() {
         </Link>
         <div>
           <h1 className="font-display text-2xl font-semibold">Submit Lyrics</h1>
-          <p className="text-metadata">
-            Share a song with the Malagasy music community
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Add a new song to the Malagasy lyrics archive
           </p>
         </div>
       </div>
@@ -247,7 +297,7 @@ export function SubmitPage() {
               {errors.year && <FieldError message={errors.year} />}
             </div>
 
-            {/* Genre */}
+            {/* Genre (UI only — not sent to backend) */}
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="genre">
                 Genre{" "}
@@ -280,7 +330,7 @@ export function SubmitPage() {
             <h2 className="font-display font-semibold text-foreground">
               Lyrics <span style={{ color: "oklch(var(--primary))" }}>*</span>
             </h2>
-            <p className="text-metadata text-xs mt-0.5">
+            <p className="text-muted-foreground text-xs mt-0.5">
               Separate verses with a blank line
             </p>
           </div>
@@ -293,7 +343,7 @@ export function SubmitPage() {
               setErrors((ev) => ({ ...ev, lyrics: "Lyrics are required." }))
             }
             placeholder={
-              "Tomany, hitako ny masonao tomany,\nTsy kivy aho, fa mbola mitady fitiavana...\n\nTomany, hitako ny tropha soya hapo,\nTsy kivy aho, fa mbola kitady fitiavana..."
+              "Tomany, hitako ny masonao tomany,\nTsy kivy aho, fa mbola mitady fitiavana...\n\nTomany, hitako ny tropha soya hapo,\nTsy kivy aho, fa mbola mitady fitiavana..."
             }
             rows={12}
             aria-invalid={!!errors.lyrics}
@@ -312,7 +362,7 @@ export function SubmitPage() {
                 (optional)
               </span>
             </h2>
-            <p className="text-metadata text-xs mt-0.5">
+            <p className="text-muted-foreground text-xs mt-0.5">
               Translation notes, song context, or any other info
             </p>
           </div>
@@ -340,7 +390,7 @@ export function SubmitPage() {
             className="min-w-[140px] font-display"
             data-ocid="submit-lyrics-btn"
           >
-            {isPending ? "Sharing…" : "Share Lyrics"}
+            {isPending ? "Saving…" : "Submit Lyrics"}
           </Button>
         </div>
       </form>
@@ -348,7 +398,7 @@ export function SubmitPage() {
   );
 }
 
-function FieldError({ message }: { message: string }) {
+export function FieldError({ message }: { message: string }) {
   return (
     <p
       className="flex items-center gap-1.5 text-xs mt-1"

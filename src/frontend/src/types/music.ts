@@ -2,13 +2,13 @@
 import type { ExternalBlob } from "@/backend";
 
 export interface TrackView {
-  id: string;
+  id: bigint;
   title: string;
   artist: string;
   album: string;
   priceUSD: number;
-  audioFile: string;
-  coverImage: string;
+  audioFile: ExternalBlob;
+  coverImage: ExternalBlob;
   published: boolean;
   sellerId: string;
   sellerName: string;

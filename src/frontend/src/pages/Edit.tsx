@@ -41,10 +41,10 @@ function initFormFromLyric(lyric: LyricEntry) {
     title: lyric.title,
     artist: lyric.artist,
     album: lyric.album ?? "",
-    year: lyric.year?.toString() ?? "",
-    genre: lyric.genre ?? "",
+    year: lyric.yearReleased > 0n ? lyric.yearReleased.toString() : "",
+    genre: "",
     lyrics: lyric.lyrics,
-    notes: "",
+    notes: lyric.notes ?? "",
   };
 }
 
@@ -96,10 +96,12 @@ export function EditPage() {
     const input: LyricInput = {
       title: form.title.trim(),
       artist: form.artist.trim(),
-      album: form.album.trim() || undefined,
-      year: form.year ? Number(form.year) : undefined,
-      genre: form.genre || undefined,
+      album: form.album.trim(),
+      yearReleased: form.year.trim()
+        ? BigInt(Math.round(Number(form.year)))
+        : BigInt(0),
       lyrics: form.lyrics.trim(),
+      notes: form.notes.trim(),
     };
     try {
       await mutateAsync({ id: BigInt(id), input });
@@ -194,7 +196,7 @@ export function EditPage() {
   // Authorization check: only the original contributor may edit
   const principalId = identity?.getPrincipal().toText();
   const isAuthorized =
-    Boolean(principalId) && lyric.contributorId === principalId;
+    Boolean(principalId) && lyric.contributorId.toString() === principalId;
 
   if (!isAuthorized) {
     return (

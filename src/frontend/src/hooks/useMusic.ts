@@ -24,15 +24,15 @@ export function useTracks(params?: MusicSearchParams) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const a = actor as any;
-        if (params?.searchText || params?.artist || params?.sortOrder) {
-          const results = await a.searchTracks({
-            searchText: params.searchText ?? "",
-            artist: params.artist ?? "",
-            sortOrder: params.sortOrder ?? "newest",
-          });
-          return results as TrackView[];
-        }
-        const results = await a.listTracks();
+        const results = await a.listTracks(
+          params
+            ? {
+                searchText: params.searchText ?? "",
+                artist: params.artist ?? "",
+                sortOrder: params.sortOrder ?? "newest",
+              }
+            : null,
+        );
         return results as TrackView[];
       } catch {
         return [];
@@ -67,6 +67,7 @@ export function useSearchTracks(params: MusicSearchParams) {
 }
 
 // ── Query: single track ──────────────────────────────────────────────────────
+// id is a URL string param — convert to bigint before backend call
 export function useTrack(id: string) {
   const { actor, isFetching } = useActor(createActor);
   return useQuery<TrackView | null>({
@@ -74,9 +75,10 @@ export function useTrack(id: string) {
     queryFn: async (): Promise<TrackView | null> => {
       if (!actor) return null;
       try {
+        const trackId = BigInt(id);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const a = actor as any;
-        const result = await a.getTrack(id);
+        const result = await a.getTrack(trackId);
         return (result ?? null) as TrackView | null;
       } catch {
         return null;
@@ -131,12 +133,12 @@ export function usePublishTrack() {
   const { actor } = useActor(createActor);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: TrackInput): Promise<string> => {
+    mutationFn: async (input: TrackInput): Promise<bigint> => {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
       const id = await a.publishTrack(input);
-      return id as string;
+      return id as bigint;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tracks"] });
@@ -149,12 +151,11 @@ export function useRepublishTrack() {
   const { actor } = useActor(createActor);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (trackId: string): Promise<boolean> => {
+    mutationFn: async (trackId: string): Promise<void> => {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
-      const result = await a.republishTrack(trackId);
-      return result as boolean;
+      await a.republishTrack(BigInt(trackId));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tracks"] });
@@ -167,12 +168,11 @@ export function useUnpublishTrack() {
   const { actor } = useActor(createActor);
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (trackId: string): Promise<boolean> => {
+    mutationFn: async (trackId: string): Promise<void> => {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
-      const result = await a.unpublishTrack(trackId);
-      return result as boolean;
+      await a.unpublishTrack(BigInt(trackId));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tracks"] });
@@ -195,7 +195,7 @@ export function useEditTrack() {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
-      await a.editTrack(id, input);
+      await a.editTrack(BigInt(id), input);
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["tracks"] });
@@ -210,29 +210,23 @@ export function useCreateCheckoutSession() {
   return useMutation({
     mutationFn: async ({
       trackId,
-      trackTitle,
-      priceUSD,
+      trackTitle: _trackTitle,
+      priceUSD: _priceUSD,
     }: {
-      trackId: string;
+      trackId: bigint;
       trackTitle: string;
       priceUSD: number;
     }): Promise<CheckoutSession> => {
       if (!actor) throw new Error("Actor not available");
       const baseUrl = `${window.location.protocol}//${window.location.host}`;
-      const successUrl = `${baseUrl}/payment-success?trackId=${trackId}`;
+      const successUrl = `${baseUrl}/payment-success?trackId=${trackId.toString()}`;
       const cancelUrl = `${baseUrl}/payment-failure`;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
+      // Build shopping item via backend helper for correct pricing
+      const shoppingItem = await a.buildTrackShoppingItem(trackId);
       const result = await a.createCheckoutSession(
-        [
-          {
-            currency: "usd",
-            productName: trackTitle,
-            productDescription: `Malagasy Lyrics – ${trackTitle}`,
-            priceInCents: Math.round(priceUSD * 100),
-            quantity: 1,
-          },
-        ],
+        [shoppingItem],
         successUrl,
         cancelUrl,
       );
@@ -256,12 +250,11 @@ export function useRecordPurchase() {
     }: {
       trackId: string;
       sessionId: string;
-    }): Promise<boolean> => {
+    }): Promise<void> => {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
-      const result = await a.recordTrackPurchase(sessionId, trackId);
-      return result as boolean;
+      await a.recordTrackPurchase(sessionId, BigInt(trackId));
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["purchases"] });

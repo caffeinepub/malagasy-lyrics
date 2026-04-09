@@ -28,13 +28,9 @@ function formatDate(timestamp: bigint): string {
   });
 }
 
-function mockViewCount(id: bigint): number {
-  const seed = Number(id % 9999n);
-  return 120 + ((seed * 37) % 4880);
-}
-
-function formatViews(n: number): string {
-  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
+function formatViews(n: bigint): string {
+  const num = Number(n);
+  return num >= 1000 ? `${(num / 1000).toFixed(1)}k` : String(num);
 }
 
 // ── Loading skeleton ──────────────────────────────────────────────────────────
@@ -106,7 +102,7 @@ interface LyricContentProps {
 }
 
 function LyricContent({ lyric, isOwner }: LyricContentProps) {
-  const views = mockViewCount(lyric.id);
+  const views = lyric.viewCount;
 
   const handleShare = async () => {
     try {
@@ -201,25 +197,16 @@ function LyricContent({ lyric, isOwner }: LyricContentProps) {
                 {lyric.album}
               </span>
             )}
-            {lyric.year && (
+            {lyric.yearReleased > 0n && (
               <span className="flex items-center gap-1.5 text-base text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5 opacity-70" />
-                {lyric.year}
+                {lyric.yearReleased.toString()}
               </span>
             )}
           </div>
 
           {/* Badges row */}
           <div className="flex flex-wrap gap-2">
-            {lyric.genre && (
-              <Badge
-                variant="secondary"
-                className="text-xs tracking-wide uppercase"
-                data-ocid="lyric-detail-genre-badge"
-              >
-                {lyric.genre}
-              </Badge>
-            )}
             <Badge
               variant="outline"
               className="text-xs gap-1.5 border-border text-muted-foreground"
@@ -298,7 +285,7 @@ function LyricContent({ lyric, isOwner }: LyricContentProps) {
               >
                 Lirik nampidirin'i:{" "}
                 <strong style={{ color: "oklch(0.18 0.04 30)" }}>
-                  {lyric.contributor}
+                  {lyric.contributorName}
                 </strong>
               </p>
             </div>
@@ -328,16 +315,16 @@ function LyricContent({ lyric, isOwner }: LyricContentProps) {
           <p className="text-sm text-muted-foreground leading-relaxed">
             Shared by{" "}
             <span className="font-semibold text-foreground">
-              {lyric.contributor}
+              {lyric.contributorName}
             </span>{" "}
             on{" "}
             <span className="text-foreground">
-              {formatDate(lyric.createdAt)}
+              {formatDate(lyric.submittedAt)}
             </span>
           </p>
-          {lyric.updatedAt !== lyric.createdAt && (
-            <p className="text-xs text-muted-foreground">
-              Last updated {formatDate(lyric.updatedAt)}
+          {lyric.notes && (
+            <p className="text-xs text-muted-foreground mt-1 italic">
+              {lyric.notes}
             </p>
           )}
         </motion.section>
@@ -354,10 +341,10 @@ export function LyricDetailPage() {
   const { data: lyric, isLoading } = useLyric(lyricId);
   const { identity } = useInternetIdentity();
 
-  // Owner check: compare contributorId (stored principal text) against logged-in principal
+  // Owner check: compare contributorId (stored principal) against logged-in principal
   const principalText = identity?.getPrincipal().toText();
   const isOwner = Boolean(
-    lyric && principalText && lyric.contributorId === principalText,
+    lyric && principalText && lyric.contributorId.toString() === principalText,
   );
 
   if (isLoading) return <LoadingSkeleton />;

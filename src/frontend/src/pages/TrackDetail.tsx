@@ -33,9 +33,10 @@ export function TrackDetailPage() {
   }, []);
 
   function handleTogglePlay() {
-    if (!track?.audioFile) return;
+    const audioUrl = track?.audioFile?.getDirectURL?.();
+    if (!audioUrl) return;
     if (!audioRef.current) {
-      audioRef.current = new Audio(track.audioFile);
+      audioRef.current = new Audio(audioUrl);
       audioRef.current.addEventListener("ended", () => setIsPlaying(false));
     }
     if (isPlaying) {
@@ -68,7 +69,6 @@ export function TrackDetailPage() {
       );
     }
   }
-
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-10 max-w-4xl">
@@ -132,7 +132,7 @@ export function TrackDetailPage() {
           >
             {track.coverImage ? (
               <img
-                src={track.coverImage}
+                src={track.coverImage.getDirectURL()}
                 alt={track.title}
                 className="w-full h-full object-cover"
               />

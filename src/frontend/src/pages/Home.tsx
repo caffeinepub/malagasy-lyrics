@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -73,14 +72,14 @@ function LyricCardCompact({ lyric }: { lyric: LyricEntry }) {
       </p>
       <div className="mt-3 flex items-center gap-2">
         <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-semibold text-xs bg-primary/20 text-primary">
-          {(lyric.contributor ?? "").charAt(0).toUpperCase() || "?"}
+          {(lyric.contributorName ?? "").charAt(0).toUpperCase() || "?"}
         </div>
         <span className="text-muted-foreground text-xs truncate flex-1">
-          {lyric.contributor}
+          {lyric.contributorName}
         </span>
-        {lyric.year && (
+        {lyric.yearReleased > 0n && (
           <span className="text-muted-foreground text-[10px] shrink-0">
-            {lyric.year}
+            {lyric.yearReleased.toString()}
           </span>
         )}
       </div>
@@ -120,10 +119,10 @@ function RecentCard({ lyric }: { lyric: LyricEntry }) {
             color: "oklch(var(--foreground))",
           }}
         >
-          {(lyric.contributor ?? "").charAt(0).toUpperCase() || "?"}
+          {(lyric.contributorName ?? "").charAt(0).toUpperCase() || "?"}
         </div>
         <span className="text-muted-foreground text-xs truncate">
-          {lyric.contributor}
+          {lyric.contributorName}
         </span>
       </div>
     </Link>
@@ -166,11 +165,6 @@ function SongRowCard({ lyric, index }: { lyric: LyricEntry; index: number }) {
           <h3 className="font-display font-semibold text-foreground leading-snug truncate">
             {lyric.title}
           </h3>
-          {lyric.genre && (
-            <Badge variant="secondary" className="text-[10px] shrink-0">
-              {lyric.genre}
-            </Badge>
-          )}
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">{lyric.artist}</p>
         <p className="text-xs text-muted-foreground mt-1 line-clamp-1 italic opacity-70">
@@ -180,15 +174,17 @@ function SongRowCard({ lyric, index }: { lyric: LyricEntry; index: number }) {
 
       {/* Meta */}
       <div className="text-right shrink-0 space-y-1">
-        {lyric.year && (
-          <p className="text-xs text-muted-foreground">{lyric.year}</p>
+        {lyric.yearReleased > 0n && (
+          <p className="text-xs text-muted-foreground">
+            {lyric.yearReleased.toString()}
+          </p>
         )}
         <div className="flex items-center gap-1 text-muted-foreground justify-end">
           <Eye className="w-3 h-3" />
-          <span className="text-xs">{100 + Number(lyric.id % 900n)}</span>
+          <span className="text-xs">{Number(lyric.viewCount)}</span>
         </div>
         <p className="text-xs text-muted-foreground truncate max-w-[100px]">
-          {lyric.contributor}
+          {lyric.contributorName}
         </p>
       </div>
     </Link>
@@ -303,7 +299,7 @@ function FeaturedCard({ lyric }: { lyric: LyricEntry }) {
                 className="font-bold"
                 style={{ color: "oklch(0.18 0.04 30)" }}
               >
-                {lyric.contributor}
+                {lyric.contributorName}
               </strong>
             </p>
           </div>
@@ -385,15 +381,14 @@ export function HomePage() {
   const allLyrics = allLyricsRaw as LyricEntry[] | undefined;
   const { data: searchResultsRaw, isLoading: isSearchLoading } =
     useSearchLyrics({
-      query: localQ,
-      artist: undefined,
-      genre: activeGenre !== "All" ? activeGenre : undefined,
+      searchText: localQ,
+      artistFilter: undefined,
       sortOrder:
-        sortOrder === "newest"
-          ? { __kind__: "Newest" }
+        sortOrder === "alpha"
+          ? { __kind__: "alphabetical" }
           : sortOrder === "oldest"
-            ? { __kind__: "Oldest" }
-            : { __kind__: "Alphabetical" },
+            ? { __kind__: "mostRecent" }
+            : { __kind__: "mostRecent" },
     });
   const searchResults = searchResultsRaw as LyricEntry[] | undefined;
   const { data: artistsRaw } = useArtists();
@@ -408,13 +403,14 @@ export function HomePage() {
     selectedYear === "All"
       ? rawResults
       : rawResults.filter((l) => {
-          if (!l.year) return false;
-          if (selectedYear === "2020s") return l.year >= 2020;
-          if (selectedYear === "2010s") return l.year >= 2010 && l.year < 2020;
-          if (selectedYear === "2000s") return l.year >= 2000 && l.year < 2010;
-          if (selectedYear === "1990s") return l.year >= 1990 && l.year < 2000;
-          if (selectedYear === "1980s") return l.year >= 1980 && l.year < 1990;
-          if (selectedYear === "Classic") return l.year < 1980;
+          const yr = Number(l.yearReleased);
+          if (!yr) return false;
+          if (selectedYear === "2020s") return yr >= 2020;
+          if (selectedYear === "2010s") return yr >= 2010 && yr < 2020;
+          if (selectedYear === "2000s") return yr >= 2000 && yr < 2010;
+          if (selectedYear === "1990s") return yr >= 1990 && yr < 2000;
+          if (selectedYear === "1980s") return yr >= 1980 && yr < 1990;
+          if (selectedYear === "Classic") return yr < 1980;
           return true;
         });
 
@@ -423,8 +419,8 @@ export function HomePage() {
     if (sortOrder === "alpha")
       return (a.title ?? "").localeCompare(b.title ?? "");
     if (sortOrder === "oldest")
-      return Number(a.createdAt) - Number(b.createdAt);
-    return Number(b.createdAt) - Number(a.createdAt);
+      return Number(a.submittedAt) - Number(b.submittedAt);
+    return Number(b.submittedAt) - Number(a.submittedAt);
   });
 
   const featuredLyric = allLyrics?.[0];
