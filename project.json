@@ -1,0 +1,24 @@
+{
+  "overview": "Malagasy Lyrics is a community platform for discovering, browsing, and sharing Malagasy music lyrics. Users can search songs by artist or title, view full lyrics with metadata, and submit or edit their own entries after logging in.",
+  "features": [
+    "Browse lyrics catalog organized by artist and song title",
+    "Full lyrics view with artist, album, year, and contributor info",
+    "Search by song title, artist name, or lyric content",
+    "Filter and sort results with URL state persistence",
+    "Submit new lyrics via authenticated user form",
+    "Edit your own submitted lyrics",
+    "Internet Identity login for secure contributions",
+    "Sample content pre-loaded so catalog is never empty"
+  ],
+  "category": "music-entertainment",
+  "tags": [
+    "lyrics",
+    "malagasy",
+    "music",
+    "community",
+    "sharing",
+    "search",
+    "catalog"
+  ],
+  "last_updated": "2026-04-08T16:46:10.686Z"
+}

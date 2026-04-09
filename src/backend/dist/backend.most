@@ -1,0 +1,72 @@
+// Version: 1.0.0
+type ExternalBlob__246066408 = Blob;
+type LyricEntry__43241476 =
+  {
+    album : Text;
+    artist : Text;
+    contributorId : UserId__18069124;
+    contributorName : Text;
+    id : LyricId__614629025;
+    lyrics : Text;
+    notes : Text;
+    submittedAt : Timestamp__516795983;
+    title : Text;
+    viewCount : Nat;
+    yearReleased : Nat
+  };
+type LyricId__614629025 = LyricId__836524793;
+type LyricId__836524793 = Nat;
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type PurchaseRecord__302433701 =
+  {
+    buyerId : UserId__158757552;
+    paidAt : Timestamp__301639476;
+    sessionId : Text;
+    trackId : TrackId__520195123
+  };
+type StripeConfiguration__96897619 =
+  {allowedCountries : [Text]; secretKey : Text};
+type Timestamp__301639476 = Int;
+type Timestamp__516795983 = Timestamp__301639476;
+type TrackEntry__847881793 =
+  {
+    album : Text;
+    artist : Text;
+    audioFile : ExternalBlob__246066408;
+    coverImage : ExternalBlob__246066408;
+    createdAt : Timestamp__301639476;
+    id : TrackId__520195123;
+    priceUSD : Float;
+    published : Bool;
+    sellerId : UserId__158757552;
+    sellerName : Text;
+    title : Text;
+    var viewCount : Nat
+  };
+type TrackId__520195123 = Nat;
+type UserId__158757552 = Principal;
+type UserId__18069124 = UserId__158757552;
+actor {
+  stable lyrics :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?LyricEntry__43241476]];
+      var elementIndex : Nat__490723111
+    };
+  stable lyricsId : {var val : Nat};
+  stable musicId : {var val : Nat};
+  stable purchases :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?PurchaseRecord__302433701]];
+      var elementIndex : Nat__490723111
+    };
+  stable stripeConfig : {var val : ?StripeConfiguration__96897619};
+  stable tracks :
+    {
+      var blockIndex : Nat__490723111;
+      var blocks : [var [var ?TrackEntry__847881793]];
+      var elementIndex : Nat__490723111
+    }
+};

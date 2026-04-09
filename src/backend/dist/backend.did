@@ -1,0 +1,178 @@
+type http_request_result = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type http_header = 
+ record {
+   name: text;
+   value: text;
+ };
+type _ImmutableObjectStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _ImmutableObjectStorageRefillInformation = record {
+                                                  proposed_top_up_amount:
+                                                   opt nat;};
+type _ImmutableObjectStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type UserId = principal;
+type TransformationOutput = 
+ record {
+   body: blob;
+   headers: vec http_header;
+   status: nat;
+ };
+type TransformationInput = 
+ record {
+   context: blob;
+   response: http_request_result;
+ };
+type TrackView = 
+ record {
+   album: text;
+   artist: text;
+   audioFile: ExternalBlob;
+   coverImage: ExternalBlob;
+   createdAt: Timestamp;
+   id: TrackId;
+   priceUSD: float64;
+   published: bool;
+   sellerId: UserId;
+   sellerName: text;
+   title: text;
+   viewCount: nat;
+ };
+type TrackInput = 
+ record {
+   album: text;
+   artist: text;
+   audioFile: ExternalBlob;
+   coverImage: ExternalBlob;
+   priceUSD: float64;
+   sellerName: text;
+   title: text;
+ };
+type TrackId = nat;
+type Timestamp = int;
+type StripeSessionStatus = 
+ variant {
+   completed: record {
+                response: text;
+                userPrincipal: opt text;
+              };
+   failed: record {error: text;};
+ };
+type StripeConfiguration = 
+ record {
+   allowedCountries: vec text;
+   secretKey: text;
+ };
+type SortOrder__1 = 
+ variant {
+   alphabetical;
+   mostRecent;
+   mostViewed;
+ };
+type SortOrder = 
+ variant {
+   newest;
+   oldest;
+   priceAsc;
+   priceDesc;
+   titleAsc;
+   titleDesc;
+ };
+type ShoppingItem = 
+ record {
+   currency: text;
+   priceInCents: nat;
+   productDescription: text;
+   productName: text;
+   quantity: nat;
+ };
+type SearchParams = 
+ record {
+   artistFilter: opt text;
+   searchText: text;
+   sortOrder: SortOrder__1;
+   yearFilter: opt nat;
+ };
+type PurchaseRecord = 
+ record {
+   buyerId: UserId;
+   paidAt: Timestamp;
+   sessionId: text;
+   trackId: TrackId;
+ };
+type MusicSearchParams = 
+ record {
+   artist: opt text;
+   searchText: opt text;
+   sortOrder: opt SortOrder;
+ };
+type LyricInput = 
+ record {
+   album: text;
+   artist: text;
+   lyrics: text;
+   notes: text;
+   title: text;
+   yearReleased: nat;
+ };
+type LyricId = nat;
+type LyricEntry = 
+ record {
+   album: text;
+   artist: text;
+   contributorId: UserId;
+   contributorName: text;
+   id: LyricId;
+   lyrics: text;
+   notes: text;
+   submittedAt: Timestamp;
+   title: text;
+   viewCount: nat;
+   yearReleased: nat;
+ };
+type ExternalBlob = blob;
+service : {
+  _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
+  _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
+  _immutableObjectStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _immutableObjectStorageCreateCertificate: (blobHash: text) ->
+   (_ImmutableObjectStorageCreateCertificateResult);
+  _immutableObjectStorageRefillCashier: (refillInformation:
+   opt _ImmutableObjectStorageRefillInformation) ->
+   (_ImmutableObjectStorageRefillResult);
+  _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
+  buildTrackShoppingItem: (trackId: TrackId) -> (ShoppingItem);
+  createCheckoutSession: (items: vec ShoppingItem, successUrl: text,
+   cancelUrl: text) -> (text);
+  editTrack: (id: TrackId, input: TrackInput) -> ();
+  getLyric: (id: LyricId) -> (opt LyricEntry);
+  getStripeSessionStatus: (sessionId: text) -> (StripeSessionStatus);
+  getTrack: (id: TrackId) -> (opt TrackView);
+  isStripeConfigured: () -> (bool) query;
+  listArtists: () -> (vec text) query;
+  listLyrics: () -> (vec LyricEntry) query;
+  listPurchases: (buyerId: UserId) -> (vec PurchaseRecord) query;
+  listSellerTracks: (sellerId: UserId) -> (vec TrackView) query;
+  listTracks: (params: opt MusicSearchParams) -> (vec TrackView) query;
+  publishTrack: (input: TrackInput) -> (TrackId);
+  recordTrackPurchase: (sessionId: text, trackId: TrackId) -> ();
+  republishTrack: (id: TrackId) -> ();
+  searchLyrics: (params: SearchParams) -> (vec LyricEntry) query;
+  searchTracks: (params: MusicSearchParams) -> (vec TrackView) query;
+  setStripeConfiguration: (config: StripeConfiguration) -> ();
+  submitLyric: (input: LyricInput) -> (LyricId);
+  transform: (input: TransformationInput) -> (TransformationOutput) query;
+  unpublishTrack: (id: TrackId) -> ();
+  updateLyric: (id: LyricId, input: LyricInput) -> (bool);
+}
