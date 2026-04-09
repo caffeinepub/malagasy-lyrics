@@ -21,8 +21,8 @@ export interface TrackInput {
   artist: string;
   album: string;
   priceUSD: number;
-  audioFile: ExternalBlob | null;
-  coverImage: ExternalBlob | null;
+  audioFile: ExternalBlob;
+  coverImage: ExternalBlob;
   sellerName: string;
 }
 

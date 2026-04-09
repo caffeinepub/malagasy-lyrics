@@ -540,41 +540,43 @@ export function HomePage() {
               </section>
 
               {/* Recently Shared — horizontal scroll row */}
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-display text-lg font-semibold text-foreground">
-                    Recently Shared Lyrics
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setLocalQ(" ")}
-                    className="text-sm hover:underline transition-colors"
-                    style={{ color: "oklch(var(--primary))" }}
-                    data-ocid="see-all-lyrics"
-                  >
-                    See all
-                  </button>
-                </div>
-                {isLoading ? (
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {(["a", "b", "c", "d", "e"] as const).map((k) => (
-                      <Skeleton
-                        key={k}
-                        className="w-52 h-32 shrink-0 rounded-xl"
-                      />
-                    ))}
+              {recentLyrics.length > 0 && (
+                <section>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="font-display text-lg font-semibold text-foreground">
+                      Recently Shared Lyrics
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setLocalQ(" ")}
+                      className="text-sm hover:underline transition-colors"
+                      style={{ color: "oklch(var(--primary))" }}
+                      data-ocid="see-all-lyrics"
+                    >
+                      See all
+                    </button>
                   </div>
-                ) : (
-                  <div
-                    className="flex gap-3 overflow-x-auto pb-2"
-                    style={{ scrollbarWidth: "none" }}
-                  >
-                    {recentLyrics.map((l) => (
-                      <RecentCard key={l.id.toString()} lyric={l} />
-                    ))}
-                  </div>
-                )}
-              </section>
+                  {isLoading ? (
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      {(["a", "b", "c", "d", "e"] as const).map((k) => (
+                        <Skeleton
+                          key={k}
+                          className="w-52 h-32 shrink-0 rounded-xl"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="flex gap-3 overflow-x-auto pb-2"
+                      style={{ scrollbarWidth: "none" }}
+                    >
+                      {recentLyrics.map((l) => (
+                        <RecentCard key={l.id.toString()} lyric={l} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )}
 
               {/* All songs grid */}
               <section>
@@ -586,6 +588,34 @@ export function HomePage() {
                     {(["a", "b", "c", "d", "e", "f"] as const).map((k) => (
                       <Skeleton key={k} className="h-40 rounded-xl" />
                     ))}
+                  </div>
+                ) : (allLyrics ?? []).length === 0 ? (
+                  <div
+                    className="rounded-xl border p-12 text-center"
+                    style={{ borderColor: "oklch(var(--border) / 0.4)" }}
+                    data-ocid="empty-lyrics-state"
+                  >
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
+                      style={{ background: "oklch(var(--primary) / 0.1)" }}
+                    >
+                      <Music2
+                        className="w-8 h-8"
+                        style={{ color: "oklch(var(--primary) / 0.6)" }}
+                      />
+                    </div>
+                    <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                      No lyrics yet
+                    </h3>
+                    <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-5 leading-relaxed">
+                      Be the first to add Malagasy song lyrics and help preserve
+                      the music culture!
+                    </p>
+                    <Link to="/submit">
+                      <Button data-ocid="empty-lyrics-cta">
+                        Contribute Lyrics
+                      </Button>
+                    </Link>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

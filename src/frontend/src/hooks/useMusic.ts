@@ -191,12 +191,11 @@ export function useEditTrack() {
     }: {
       id: string;
       input: TrackInput;
-    }): Promise<boolean> => {
+    }): Promise<void> => {
       if (!actor) throw new Error("Actor not available");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const a = actor as any;
-      const result = await a.editTrack(id, input);
-      return result as boolean;
+      await a.editTrack(id, input);
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ["tracks"] });

@@ -1,10 +1,7 @@
 import Types "../types/music";
 import Common "../types/common";
 import Storage "mo:caffeineai-object-storage/Storage";
-import List "mo:core/List";
-import Time "mo:core/Time";
 import Text "mo:core/Text";
-import Principal "mo:core/Principal";
 
 module {
 
@@ -100,76 +97,5 @@ module {
     };
   };
 
-  /// Seed sample tracks. Returns the next available id after seeding.
-  public func seedSamples(tracks : List.List<Types.TrackEntry>, startId : Nat) : Nat {
-    let anon = Principal.anonymous();
-    let t    = Time.now();
 
-    // Placeholder blobs — real uploads come from the frontend
-    let emptyBlob : Storage.ExternalBlob = "" : Blob;
-
-    type Seed = {
-      title      : Text;
-      artist     : Text;
-      album      : Text;
-      priceUSD   : Float;
-      sellerName : Text;
-      createdAt  : Common.Timestamp;
-    };
-
-    let seeds : [Seed] = [
-      {
-        title      = "Raha Mbola Izy";
-        artist     = "Rossy";
-        album      = "Moramorà";
-        priceUSD   = 1.99;
-        sellerName = "Rossy Official";
-        createdAt  = t - 6_000_000_000_000;
-      },
-      {
-        title      = "Iray Ihany";
-        artist     = "Tarika Sammy";
-        album      = "Faneva";
-        priceUSD   = 1.49;
-        sellerName = "Tarika Sammy Records";
-        createdAt  = t - 5_000_000_000_000;
-      },
-      {
-        title      = "Tsy Misy Mahalala";
-        artist     = "Mahaleo";
-        album      = "Mahaleo Live";
-        priceUSD   = 2.49;
-        sellerName = "Mahaleo";
-        createdAt  = t - 4_000_000_000_000;
-      },
-      {
-        title      = "Ry Tanindrazana";
-        artist     = "Rossy";
-        album      = "Salegy";
-        priceUSD   = 0.99;
-        sellerName = "Rossy Official";
-        createdAt  = t - 3_000_000_000_000;
-      },
-    ];
-
-    var id = startId;
-    for (s in seeds.values()) {
-      tracks.add({
-        id;
-        title      = s.title;
-        artist     = s.artist;
-        album      = s.album;
-        priceUSD   = s.priceUSD;
-        audioFile  = emptyBlob;
-        coverImage = emptyBlob;
-        published  = true;
-        sellerId   = anon;
-        sellerName = s.sellerName;
-        createdAt  = s.createdAt;
-        var viewCount = 0;
-      });
-      id += 1;
-    };
-    id;
-  };
 };

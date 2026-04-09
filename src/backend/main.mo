@@ -2,8 +2,6 @@ import LyricTypes "types/lyrics";
 import MusicTypes "types/music";
 import LyricsMixin "mixins/lyrics-api";
 import MusicMixin "mixins/music-api";
-import LyricsLib "lib/lyrics";
-import MusicLib "lib/music";
 import MixinObjectStorage "mo:caffeineai-object-storage/Mixin";
 import Stripe "mo:caffeineai-stripe/stripe";
 import OutCall "mo:caffeineai-http-outcalls/outcall";
@@ -22,10 +20,6 @@ actor {
   let musicId      = { var val : Nat = 0 };
   let purchases    = List.empty<MusicTypes.PurchaseRecord>();
   let stripeConfig = { var val : ?Stripe.StripeConfiguration = null };
-
-  // ── Seed initial data ────────────────────────────────────────────────────────
-  lyricsId.val := LyricsLib.seedSamples(lyrics, 0);
-  musicId.val  := MusicLib.seedSamples(tracks, 0);
 
   // ── Object storage (file upload/download infrastructure) ─────────────────────
   include MixinObjectStorage();

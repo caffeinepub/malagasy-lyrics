@@ -423,6 +423,12 @@ function TrackForm({
       toast.error("Please wait for file uploads to complete");
       return;
     }
+    if (!audioPicker.blob || !coverPicker.blob) {
+      toast.error(
+        "Please attach both an audio file and a cover image before saving.",
+      );
+      return;
+    }
     await onSubmit({
       title: title.trim(),
       artist: artist.trim(),
